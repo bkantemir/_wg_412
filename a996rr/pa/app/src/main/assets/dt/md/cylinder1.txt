@@ -1,0 +1,7 @@
+
+<mt_save_as=green mt_type=phong uColor=#00ff00/>
+<mt_type=phong uColor=#ff0000/>
+<group>
+	<vs=cylinder whl='1,1,1' sectR=60 />
+	<a=wrap side=',green'/>
+</group >

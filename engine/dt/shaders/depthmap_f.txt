@@ -1,0 +1,130 @@
+//#version 320 es
+precision highp float;
+out float FragColor; //output pixel color
+in float vZ;
+
+uniform float uAlphaFactor; //for semi-transparency
+uniform int uDiscardNormalsOut; //for tips
+
+uniform float uConstZ;
+
+#if defined(USE_NORMALS)
+	in vec3 vNormal; //normal passed from rasterizer
+	uniform mat4 uDepthBias;
+	uniform float uEdgeAlpha; //<0-dissolve, >0-reveal
+#endif
+
+#if defined(USE_TEX0)
+	uniform sampler2D uTex0;  //texture id
+	uniform sampler2D uTex3;  //translate texture id
+	uniform int uTex0translateChannelN;
+#else
+	uniform vec4 uColor;
+#endif
+#if defined(USE_TUV0)
+	in vec2 vTuv; //varying TUV (passed from vertex shader)
+#endif
+#if defined(USE_NORMALMAP)
+	in vec2 vTuv2; //varying TUV (passed from vertex shader)
+	uniform sampler2D uTex2nm;  //texture id
+#endif
+#if defined(OVERMASK)
+	uniform sampler2D uTex1mask;  //texture id
+	uniform int uTex1alphaChannelN;
+	uniform int uTex1alphaNegative;
+#endif
+#if defined(USE_TEXMODS)
+	uniform mat4 uTexMods;
+#endif
+
+void main(void) {
+	if(abs(vZ) >= 1.0){
+		discard;
+		return;
+	}
+	vec4 outColor = vec4(1.0,1.0,1.0,1.0);
+	float alpha = 1.0;
+	
+#if defined(USE_NORMALMAP)
+	outColor = texture(uTex2nm, vTuv2);
+	alpha = outColor.a;
+	if(alpha < 0.5){
+		discard;
+		return;
+	}
+#endif
+
+#if defined(OVERMASK)
+	outColor = texture(uTex1mask, vTuv);
+	alpha = outColor[uTex1alphaChannelN];
+	if(uTex1alphaNegative > 0)
+		alpha = 1.0 - alpha;
+	if(alpha < 0.5){
+		discard;
+		return;
+	}
+#endif
+#if defined(USE_TEX0)
+	outColor = texture(uTex0, vTuv);
+	if(uTex0translateChannelN >= 0 && uTex0translateChannelN < 4){ //translate channel
+		vec2 tuv3;
+		tuv3[0] = outColor[uTex0translateChannelN];
+		tuv3[1] = 0.0;
+		#if defined(USE_TEXMODS)
+			if(uTexMods[3][0] >0.0)
+				tuv3[0] = tuv3[0]*uTexMods[3][1] + uTexMods[3][2];
+		#endif
+		outColor = texture(uTex3, tuv3);
+	}
+#else
+	outColor = uColor;
+#endif
+	if(outColor.a != 1.0){
+		alpha *= outColor.a;
+		if(alpha < 0.5){
+			discard;
+			return;
+		}
+	}
+	alpha = alpha * uAlphaFactor;
+	if(alpha < 0.5){
+		discard;
+		return;
+	}
+
+	float z = vZ;
+	
+#if defined(USE_NORMALS)
+	vec3 vNormalNormal = normalize(vNormal);
+	
+	if(uEdgeAlpha!=0.0){
+		float edgeWidth=1.0; //clouds
+		if(uEdgeAlpha > 0.0)
+			edgeWidth=0.5; //glass
+		if(vNormalNormal[2]<edgeWidth){
+			float edgeAlphaD=(1.0-vNormalNormal[2]/edgeWidth)*uEdgeAlpha;
+			alpha+=edgeAlphaD;
+			if(alpha>1.0)
+				alpha=1.0;
+			else if(alpha<=0.5){
+				discard;
+				return;
+			}
+		}
+	}
+	
+	int i = int(floor(abs(vNormalNormal.z) * 17.0)) - 1;
+	if(i < 0)
+		i=0;
+	else
+	if(i > 15)
+		i=15;
+	z += uDepthBias[0][i];	
+#endif
+	z += uConstZ;
+
+	FragColor = z;
+
+}
+
+

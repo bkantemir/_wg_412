@@ -1,0 +1,6 @@
+
+<mt_type=flat uColor=#ffff00 lineWidth=0.5 lineWidthFixed=2/>
+<group>
+	<short p0='0,0,0' dz=1/>
+	<short p0='0,0,0' dy=-1/>
+</group >

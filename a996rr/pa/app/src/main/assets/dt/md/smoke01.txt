@@ -1,0 +1,6 @@
+
+<mt_type=phong uEdgeAlpha=-1 uAlphaBlending useTexMod uSpecularIntencity=0 uAmbient=0.8 uAlphaFactor=0.2 uTex0_src='/dt/mt/wn64_blur3.bmp'/>//
+<group>
+	<vs=cap whl='1,1,0.5' sectR=12 sectZ=3/>
+	<a=front/>
+</group>

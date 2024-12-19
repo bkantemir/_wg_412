@@ -1,0 +1,4 @@
+<include='bogie00.txt'/>
+
+<element='/dt/md/rr/coupler/couplerbox01.txt' class=Coupler full lever=1 pz=9 opaque/>
+
